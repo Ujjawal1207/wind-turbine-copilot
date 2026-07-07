@@ -49,7 +49,7 @@ During high-stress structural replacement or abnormal load remediation of the pl
 SECTION 14.2.2 - NOMINAL OPERATIONS AND STANDARD PREVENTATIVE MAINTENANCE ROUTINE
 Under healthy baseline conditions, standard preventative maintenance must be performed every 2500 operating hours. The standard maintenance routine requires a complete visual inspection of the nacelle housing, replenishing the synthetic gear lubricant, cleaning the cooling intake vents, and collecting a raw oil sample to monitor particulate counts. Technicians should verify that the system system pressure is holding steady at a nominal baseline of 160 bar. No mechanical rotor lock is required for external visual sweeps.
 """
-"""
+
 
 def generate_scada_data(trigger_anomaly=False):
     """Generates synthetic wind turbine SCADA sensor data."""
