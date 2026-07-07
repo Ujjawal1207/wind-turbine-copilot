@@ -1,6 +1,6 @@
 import streamlit as st
 import spacy
-from transformers import pipeline
+from transformers import pipeline, AutoModelForQuestionAnswering, AutoTokenizer, QuestionAnsweringPipeline
 
 # Set up page config for a widescreen layout
 st.set_page_config(layout="wide", page_title="Wind Turbine AI Copilot Demo")
@@ -10,8 +10,15 @@ st.set_page_config(layout="wide", page_title="Wind Turbine AI Copilot Demo")
 def load_nlp_models():
     # Load spaCy for entity recognition
     nlp = spacy.load("en_core_web_sm")
-    # Load a lightweight, highly accurate Hugging Face Question-Answering model
-    qa_pipeline = pipeline("question_answering", model="deepset/roberta-base-squad2")
+    
+    # Explicitly load tokenizer and model to bypass Python 3.14 string registry bugs
+    model_name = "deepset/roberta-base-squad2"
+    model = AutoModelForQuestionAnswering.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    
+    # Create the pipeline explicitly using its dedicated class
+    qa_pipeline = QuestionAnsweringPipeline(model=model, tokenizer=tokenizer)
+    
     return nlp, qa_pipeline
 
 nlp, qa_pipeline = load_nlp_models()
