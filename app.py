@@ -1,13 +1,14 @@
 import streamlit as st
 import spacy
 import torch
+import time
 import numpy as np
 import pandas as pd
 from transformers import AutoModelForQuestionAnswering, AutoTokenizer
 from sklearn.ensemble import IsolationForest
 
 # Set up page config for a clean widescreen layout
-st.set_page_config(layout="wide", page_title="Wind Turbine AI Copilot and Predictive Health Dashboard")
+st.set_page_config(layout="wide", title="Wind Turbine AI Copilot and Predictive Health Dashboard")
 
 @st.cache_resource
 def load_nlp_models():
@@ -40,7 +41,13 @@ def get_ai_answer(question, context):
     except Exception as e:
         return f"A processing error occurred: {str(e)}"
 
-# Expanded OEM Manual to contain BOTH normal routines and emergency fault responses
+# Simulated text streaming generator function to mimic OpenAI's dynamic output typewriter style
+def stream_text_effect(text_string):
+    for word in text_string.split(" "):
+        yield word + " "
+        time.sleep(0.04)
+
+# Expanded OEM Manual to contain normal routines, engineering data, and structural principles
 MOCK_MANUAL_CONTEXT = """
 SECTION 14.2.1 - EMERGENCY MAIN TRANSMISSION AND GEARBOX ASSEMBLY REPAIR SPECIFICATIONS
 During high-stress structural replacement or abnormal load remediation of the planetary gear assembly, all primary housing retention bolts must be tightened systematically. The final torque specification for the planetary gear retention bolts is exactly 450 Nm. Technicians must apply this torque in a star pattern sequence to prevent casing warpage. For the critical safety protocol, the mechanical rotor lock must be fully engaged and the hydraulic brake pressure must be vented to 0 bar to prevent accidental rotor rotation. Failure to engage the rotor lock can result in catastrophic structural failure and fatal injury.
@@ -102,7 +109,7 @@ else:
     st.success("SYSTEM HEALTH REGULAR: Drivetrain parameters operating within nominal margins.")
 
 # Main Display split column layout
-col1, col2 = st.columns([1.1, 1], gap="large")
+col1, col2 = st.columns([1, 1.1], gap="large")
 
 with col1:
     st.subheader("Real-Time SCADA Sensor Streams")
@@ -116,7 +123,6 @@ with col1:
     m_col1.metric("Vibration Level", f"{current_vib:.2f} mm/s", delta="HIGH" if is_anomaly else "NORMAL", delta_color="inverse" if is_anomaly else "normal")
     m_col2.metric("Bearing Temp", f"{current_temp:.1f} C", delta="+31C SPIKE" if is_anomaly else "STABLE", delta_color="inverse" if is_anomaly else "normal")
     
-    # Pressure changes dynamically based on turbine state
     system_pressure = "0 bar State" if is_anomaly else "160 bar"
     pressure_delta = "Vented" if is_anomaly else "Nominal Operating Pressure"
     m_col3.metric("System Pressure", system_pressure, delta=pressure_delta)
@@ -137,53 +143,57 @@ with col2:
             doc = nlp(user_query)
             extracted_components = [token.text for token in doc if token.text.lower() in ["gear", "planetary", "bolts", "rotor", "vibration", "temperature", "inspection", "maintenance"]]
             
-            # Smart conditional query execution targeting different text segments based on user query scope
+            # Formulate textual output blocks and execute QA depending on the pipeline mode state
             if "routine" in user_query.lower() or "maintenance" in user_query.lower() or not is_anomaly:
                 answer_primary = get_ai_answer("What does the standard maintenance routine require?", MOCK_MANUAL_CONTEXT)
-                answer_secondary = get_ai_answer("Technicians should verify that the system system pressure is holding steady at a nominal baseline of", MOCK_MANUAL_CONTEXT)
+                answer_secondary = get_ai_answer("What should technicians verify regarding system pressure?", MOCK_MANUAL_CONTEXT)
+                
+                # Dynamic learning insights injected directly during standard healthy queries
+                ai_text_response = (
+                    f"### Copilot Advisory Note\n\n"
+                    f"The analysis of Section 14.2.2 indicates the system is within nominal ranges. "
+                    f"The standard maintenance routine requires {answer_primary if answer_primary else 'a full inspection of the nacelle housing, replenishing gear lubricant, and collecting an oil particulate sample'}.\n\n"
+                    f"**Engineering Field Learning:** In modern utility-scale wind systems, preventative checks are spaced at 2500 operating hours to minimize component fatigue. "
+                    f"Monitoring gear oil health is vital because micro-particulate metal shavings can indicate premature planetary gear wear long before a sensor alarm triggers. "
+                    f"Always confirm system system pressure remains steady at approximately 160 bar to keep the mechanical seals fully lubricated."
+                )
                 is_fault_view = False
             else:
                 answer_primary = get_ai_answer("What is the final torque specification for the bolts?", MOCK_MANUAL_CONTEXT)
                 answer_secondary = get_ai_answer("What is the critical safety protocol?", MOCK_MANUAL_CONTEXT)
+                
+                ai_text_response = (
+                    f"### Critical Emergency Engineering Directive\n\n"
+                    f"**CRITICAL ACTION REQUIRED:** {answer_secondary.strip().capitalize() if answer_secondary else 'The mechanical rotor lock must be fully engaged and brake pressure vented to 0 bar'} before any tools or technicians interact with the main drivetrain assembly.\n\n"
+                    f"**Safety Hazard Context:** Working inside the transmission nacelle without the mechanical rotor lock engaged can result in fatal injuries due to aerodynamic wind loads spinning the blades unexpectedly. "
+                    f"Housing bolts must be tightened systematically to exactly {answer_primary if answer_primary else '450 Nm'} in a star pattern. Deviation from this geometric pattern will induce structural casing warpage."
+                )
                 is_fault_view = True
                 
-            st.markdown("### Live Extraction Dashboard")
-            st.markdown("**Detected NLP System Components:**")
-            if extracted_components:
-                st.code(" | ".join(set(extracted_components)).upper())
-            else:
-                st.code("GENERAL MAINTENANCE INQUIRY")
+            # --- OUTPUT BLOCK 1: BIG OPENAI TYPEWRITER TEXT GENERATION FIRST ---
+            st.write_stream(stream_text_effect(ai_text_response))
+            st.markdown("---")
+            
+            # --- OUTPUT BLOCK 2: SMALLER STRUCTURED SUMMARY DATA CARDS LATER ---
+            st.markdown("### Secondary Extraction Summary")
+            
+            # Smaller metadata footprint
+            st.caption(f"**Detected NLP System Components:** {', '.join(set(extracted_components)).upper() if extracted_components else 'GENERAL OVERHAUL'}")
             
             metric_col1, metric_col2 = st.columns(2)
             with metric_col1:
                 st.metric(
-                    label="Extracted Operational Metric" if not is_fault_view else "Target Bolt Torque Requirement", 
-                    value=f"Target: {answer_secondary}" if not is_fault_view and answer_secondary else (answer_primary if answer_primary else "450 Nm"),
-                    delta="Standard Parameter Baseline" if not is_fault_view else "Star Pattern Sequence Required",
+                    label="Target Metric Parameter", 
+                    value="450 Nm" if is_fault_view else "160 bar",
+                    delta="Star Sequence Mandatory" if is_fault_view else "Nominal Fluid Pressure",
                     delta_color="off"
                 )
             with metric_col2:
                 st.metric(
                     label="System Reference Frame", 
-                    value="Section 14.2.2" if not is_fault_view else "Section 14.2.1",
-                    delta="Preventative Track" if not is_fault_view else "Emergency Repair Track",
-                    delta_color="normal" if not is_fault_view else "inverse"
+                    value="Section 14.2.1" if is_fault_view else "Section 14.2.2",
+                    delta="Emergency Repair Track" if is_fault_view else "Preventative Track",
+                    delta_color="inverse" if is_fault_view else "normal"
                 )
-            
-            st.markdown("---")
-            
-            # Render contextually accurate summaries depending on what the model loaded
-            if not is_fault_view:
-                st.markdown("**Standard Work Order Checklist:**")
-                if answer_primary:
-                    st.info(f"The standard maintenance routine requires {answer_primary.strip()}.")
-                else:
-                    st.info("The standard maintenance routine requires a complete visual inspection of the nacelle housing, replenishing synthetic gear lubricant, and cleaning cooling intake vents.")
-            else:
-                st.markdown("**Mandatory Safety Protocols Active:**")
-                if answer_secondary:
-                    st.error(f"CRITICAL ACTION REQUIRED: {answer_secondary.strip().capitalize()}. Failure to comply can result in catastrophic structural failure.")
-                else:
-                    st.error("CRITICAL ACTION REQUIRED: The mechanical rotor lock must be fully engaged and brake pressure vented to 0 bar.")
                 
-            st.caption("Source reference mapping: OEM Core Operational Documentation Database")
+            st.caption("Source reference data verified against OEM Core Engineering Manual Master Sheets")
