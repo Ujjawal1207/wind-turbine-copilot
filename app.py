@@ -44,7 +44,7 @@ def get_ai_answer(question, context):
 # Mock massive, unsearchable 1200-page OEM manual data
 MOCK_MANUAL_CONTEXT = """
 SECTION 14.2.1 - MAIN TRANSMISSION & GEARBOX ASSEMBLY SPECIFICATIONS
-The wind turbine main gearbox contains high-load planetary gears. During routine maintenance or structural replacement of the planetary gear assembly, all primary housing retention bolts must be tightened systematically. The final torque specification for the planetary gear retention bolts is exactly 450 Nm. Technicians must apply this torque in a star pattern sequence to prevent casing warpage. CRITICAL SAFETY PROTOCOL: Before attempting any torque application on the drivetrain, the mechanical rotor lock must be fully engaged, and the hydraulic brake pressure must be vented to 0 bar to prevent accidental rotor rotation. Failure to engage the rotor lock can result in catastrophic structural failure and fatal injury.
+he wind turbine main gearbox contains high-load planetary gears. During routine maintenance or structural replacement of the planetary gear assembly, all primary housing retention bolts must be tightened systematically. The final torque specification for the planetary gear retention bolts is exactly 450 Nm. Technicians must apply this torque in a star pattern sequence to prevent casing warpage. CRITICAL SAFETY PROTOCOL: Before attempting any torque application on the drivetrain, the mechanical rotor lock must be fully engaged, and the hydraulic brake pressure must be vented to 0 bar to prevent accidental rotor rotation. Failure to engage the rotor lock can result in catastrophic structural failure and fatal injury. 
 """
 
 st.title("Wind O&M Innovation Demo")
