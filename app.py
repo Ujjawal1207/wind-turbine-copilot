@@ -3,7 +3,7 @@ import spacy
 import torch
 from transformers import AutoModelForQuestionAnswering, AutoTokenizer
 
-# Set up page config
+# Set up page config for a widescreen layout
 st.set_page_config(layout="wide", page_title="Wind Turbine AI Copilot Demo")
 
 @st.cache_resource
@@ -11,7 +11,7 @@ def load_nlp_models():
     # Load spaCy for entity recognition
     nlp = spacy.load("en_core_web_sm")
     
-    # Load raw Roberta models directly to handle Transformers v5+ environments
+    # Load raw RoBERTa models directly to handle newer environments gracefully
     model_name = "deepset/roberta-base-squad2"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForQuestionAnswering.from_pretrained(model_name)
@@ -20,30 +20,26 @@ def load_nlp_models():
 
 nlp, (qa_model, qa_tokenizer) = load_nlp_models()
 
-# --- REPLACE YOUR QA EXTRACTION CODE BLOCK WITH THIS COMPATIBLE HELPER ---
+# Native PyTorch QA function bypassing old pipeline task-string registries
 def get_ai_answer(question, context):
     try:
-        # Tokenize the input text
         inputs = qa_tokenizer(question, context, return_tensors="pt", truncation=True, max_length=512)
         
         with torch.no_grad():
             outputs = qa_model(**inputs)
             
-        # Extract the highest probability answer span
         answer_start = torch.argmax(outputs.start_logits)
         answer_end = torch.argmax(outputs.end_logits) + 1
         
-        # Convert tokens back into a human-readable text string
         answer = qa_tokenizer.convert_tokens_to_string(
             qa_tokenizer.convert_ids_to_tokens(inputs["input_ids"][0][answer_start:answer_end])
         )
         
-        # Clean up empty responses or special padding tokens
-        if not answer.strip() or "<s>" in answer:
+        if not answer.strip() or "<s>" in answer or "</s>" in answer:
             return "I couldn't find a precise answer in the provided manual context."
         return answer
     except Exception as e:
-        return f"An processing error occurred: {str(e)}"
+        return f"A processing error occurred: {str(e)}"
 
 # Mock massive, unsearchable 1200-page OEM manual data
 MOCK_MANUAL_CONTEXT = """
@@ -99,10 +95,9 @@ with col2:
             # Find keywords representing the component to mimic a custom NER pipeline
             extracted_components = [token.text for token in doc if token.text.lower() in ["gear", "planetary", "bolts", "rotor"]]
             
-            # --- STEP 2: HUGGING FACE TRANSFORMER QA ---
-            # The model reads the query, parses the massive manual background text, and grabs the precise answer
-            qa_res_torque = qa_pipeline(question="What is the torque specification for the bolts?", context=MOCK_MANUAL_CONTEXT)
-            qa_res_safety = qa_pipeline(question="What is the critical safety protocol?", context=MOCK_MANUAL_CONTEXT)
+            # --- STEP 2: NATIVE TORCH QA EXTRACTIONS ---
+            answer_torque = get_ai_answer("What is the torque specification for the bolts?", MOCK_MANUAL_CONTEXT)
+            answer_safety = get_ai_answer("What is the critical safety protocol?", MOCK_MANUAL_CONTEXT)
             
             # --- STEP 3: DISPLAY THE HIGH-IMPACT RESULT ---
             st.markdown("### Live Extraction Output")
@@ -116,10 +111,10 @@ with col2:
                 <div style="background-color: #e8f4fd; border-left: 5px solid #2196F3; padding: 20px; border-radius: 5px;">
                     <h4 style="color: #0b3c5d; margin-top: 0;">🔧 Engineering Directives Found:</h4>
                     <ul>
-                        <li><b>Torque Requirement:</b> <mark style="background-color: #ffeb3b; padding: 2px 5px;"><b>{qa_res_torque['answer']}</b></mark> (Must apply in a star pattern sequence).</li>
-                        <li><b>Critical Safety Step:</b> <span style="color: #d32f2f; font-weight: bold;">{qa_res_safety['answer']}</span>.</li>
+                        <li><b>Torque Requirement:</b> <mark style="background-color: #ffeb3b; padding: 2px 5px;"><b>{answer_torque}</b></mark> (Must apply in a star pattern sequence).</li>
+                        <li><b>Critical Safety Step:</b> <span style="color: #d32f2f; font-weight: bold;">{answer_safety}</span>.</li>
                     </ul>
-                    <p style="font-size: 12px; color: #666; margin-bottom: 0; margin-top: 15px;"><i>Source: Section 14.2.1 - OEM Manual Page 743 (Confidence Score: {qa_res_torque['score']:.2%})</i></p>
+                    <p style="font-size: 12px; color: #666; margin-bottom: 0; margin-top: 15px;"><i>Source: Section 14.2.1 - OEM Manual Page 743</i></p>
                 </div>
                 """, 
                 unsafe_allow_html=True
