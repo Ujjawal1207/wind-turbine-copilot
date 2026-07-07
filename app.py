@@ -42,8 +42,13 @@ def get_ai_answer(question, context):
 
 # Mock unsearchable 1200-page OEM manual data
 MOCK_MANUAL_CONTEXT = """
-SECTION 14.2.1 - MAIN TRANSMISSION & GEARBOX ASSEMBLY SPECIFICATIONS
-The wind turbine main gearbox contains high-load planetary gears. During routine maintenance or structural replacement of the planetary gear assembly, all primary housing retention bolts must be tightened systematically. The final torque specification for the planetary gear retention bolts is exactly 450 Nm. Technicians must apply this torque in a star pattern sequence to prevent casing warpage. For the critical safety protocol, the mechanical rotor lock must be fully engaged and the hydraulic brake pressure must be vented to 0 bar to prevent accidental rotor rotation. Failure to engage the rotor lock can result in catastrophic structural failure and fatal injury.
+
+SECTION 14.2.1 - EMERGENCY MAIN TRANSMISSION AND GEARBOX ASSEMBLY REPAIR SPECIFICATIONS
+During high-stress structural replacement or abnormal load remediation of the planetary gear assembly, all primary housing retention bolts must be tightened systematically. The final torque specification for the planetary gear retention bolts is exactly 450 Nm. Technicians must apply this torque in a star pattern sequence to prevent casing warpage. For the critical safety protocol, the mechanical rotor lock must be fully engaged and the hydraulic brake pressure must be vented to 0 bar to prevent accidental rotor rotation. Failure to engage the rotor lock can result in catastrophic structural failure and fatal injury.
+
+SECTION 14.2.2 - NOMINAL OPERATIONS AND STANDARD PREVENTATIVE MAINTENANCE ROUTINE
+Under healthy baseline conditions, standard preventative maintenance must be performed every 2500 operating hours. The standard maintenance routine requires a complete visual inspection of the nacelle housing, replenishing the synthetic gear lubricant, cleaning the cooling intake vents, and collecting a raw oil sample to monitor particulate counts. Technicians should verify that the system system pressure is holding steady at a nominal baseline of 160 bar. No mechanical rotor lock is required for external visual sweeps.
+"""
 """
 
 def generate_scada_data(trigger_anomaly=False):
