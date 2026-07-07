@@ -8,7 +8,7 @@ from transformers import AutoModelForQuestionAnswering, AutoTokenizer
 from sklearn.ensemble import IsolationForest
 
 # Set up page config for a clean widescreen layout
-st.set_page_config(layout="wide", title="Wind Turbine AI Copilot and Predictive Health Dashboard")
+st.set_page_config(layout="wide", page_title="Wind Turbine AI Copilot and Predictive Health Dashboard")
 
 @st.cache_resource
 def load_nlp_models():
