@@ -1,27 +1,49 @@
 import streamlit as st
 import spacy
-from transformers import pipeline, AutoModelForQuestionAnswering, AutoTokenizer
+import torch
+from transformers import AutoModelForQuestionAnswering, AutoTokenizer
 
-# Set up page config for a widescreen layout
+# Set up page config
 st.set_page_config(layout="wide", page_title="Wind Turbine AI Copilot Demo")
 
-# Load models safely using caching so the app stays fast
 @st.cache_resource
 def load_nlp_models():
     # Load spaCy for entity recognition
     nlp = spacy.load("en_core_web_sm")
     
-    # Load model and tokenizer explicitly to handle Python 3.14 environments
+    # Load raw Roberta models directly to handle Transformers v5+ environments
     model_name = "deepset/roberta-base-squad2"
-    model = AutoModelForQuestionAnswering.from_pretrained(model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForQuestionAnswering.from_pretrained(model_name)
     
-    # Build the pipeline directly using the objects to bypass string registry checks
-    qa_pipeline = pipeline(task="question-answering", model=model, tokenizer=tokenizer)
-    
-    return nlp, qa_pipeline
+    return nlp, (model, tokenizer)
 
-nlp, qa_pipeline = load_nlp_models()
+nlp, (qa_model, qa_tokenizer) = load_nlp_models()
+
+# --- REPLACE YOUR QA EXTRACTION CODE BLOCK WITH THIS COMPATIBLE HELPER ---
+def get_ai_answer(question, context):
+    try:
+        # Tokenize the input text
+        inputs = qa_tokenizer(question, context, return_tensors="pt", truncation=True, max_length=512)
+        
+        with torch.no_grad():
+            outputs = qa_model(**inputs)
+            
+        # Extract the highest probability answer span
+        answer_start = torch.argmax(outputs.start_logits)
+        answer_end = torch.argmax(outputs.end_logits) + 1
+        
+        # Convert tokens back into a human-readable text string
+        answer = qa_tokenizer.convert_tokens_to_string(
+            qa_tokenizer.convert_ids_to_tokens(inputs["input_ids"][0][answer_start:answer_end])
+        )
+        
+        # Clean up empty responses or special padding tokens
+        if not answer.strip() or "<s>" in answer:
+            return "I couldn't find a precise answer in the provided manual context."
+        return answer
+    except Exception as e:
+        return f"An processing error occurred: {str(e)}"
 
 # Mock massive, unsearchable 1200-page OEM manual data
 MOCK_MANUAL_CONTEXT = """
