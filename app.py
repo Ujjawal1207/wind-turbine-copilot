@@ -11,7 +11,7 @@ def load_nlp_models():
     # Load spaCy for entity recognition
     nlp = spacy.load("en_core_web_sm")
     # Load a lightweight, highly accurate Hugging Face Question-Answering model
-    qa_pipeline = pipeline("question-answering", model="deepset/roberta-base-squad2")
+    qa_pipeline = pipeline("question_answering", model="deepset/roberta-base-squad2")
     return nlp, qa_pipeline
 
 nlp, qa_pipeline = load_nlp_models()
